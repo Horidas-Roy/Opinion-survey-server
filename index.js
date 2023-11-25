@@ -1,4 +1,4 @@
-const express =require('express')
+const express = require('express')
 const cors=require('cors')
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
@@ -29,6 +29,8 @@ async function run() {
     // await client.connect();
 
     const userCollection = client.db('opiniunDB').collection('users')
+    const surveyCollection = client.db('opiniunDB').collection('surveys')
+
     //jwt related api
     app.post('/jwt',async(req,res)=>{
       const user=req.body;
@@ -37,8 +39,35 @@ async function run() {
       })
       res.send({token})
     })
-
     
+    //midlewares
+    const verifyToken=(req,res,next)=>{
+       if(!req.headers.authorization){
+         return res.status(401).send({message:'unathorized access'})
+       }
+
+       const token = req.headers.authorization.split(" ")[1]
+       jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(err,decoded)=>{
+          if(err){
+            return res.status(401).send({message:'unathorized access'})
+          }
+          req.decoded=decoded;
+          next();
+       })
+    }
+
+    //use verify admin after verify token
+    const verifyAdmin=async(req,res,next)=>{
+      const email=req.decoded?.email
+      const query={email:email}
+      const user=await userCollection.findOne(query)
+      const isAdmin =user?.role==="admin"
+      if(!isAdmin){
+         return res.status(403).send({message:"forbidden access"})
+      }
+      next();
+    }
+
     
     //user related api
     app.get('/users',async(req,res)=>{
@@ -86,6 +115,12 @@ async function run() {
        const id=req.params.id;
        const query={_id : new ObjectId(id)}
        const result = await userCollection.deleteOne(query)
+       res.send(result)
+    })
+
+    //survey related api
+    app.get('/surveys',async(req,res)=>{
+       const result=await surveyCollection.find().toArray()
        res.send(result)
     })
 
