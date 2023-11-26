@@ -87,6 +87,18 @@ async function run() {
         res.send({admin})
     })
 
+    app.get('/users/surveyor/:email',async(req,res)=>{
+       const email = req.params.email
+       //todo : verify user by using token
+       const query={ email : email }
+       const user=await userCollection.findOne(query)
+       let surveyor=false;
+       if(user){
+         surveyor=user?.role === "surveyor"
+       }
+       res.send({surveyor})
+    })
+
     app.post('/users',async(req,res)=>{
        const user=req.body;
        const query={email:user?.email}
@@ -109,9 +121,21 @@ async function run() {
        const result=await userCollection.updateOne(filter,updatedDoc)
        res.send(result)
     })
+
+    app.patch('/users/surveyor/:id',async(req,res)=>{
+       const id=req.params.id;
+       const filter={_id : new ObjectId(id) }
+       const updateDoc={
+         $set:{
+           role:"surveyor"
+         }
+       }
+       const result=await userCollection.updateOne(filter,updateDoc)
+       res.send(result)
+    })
     
 
-    app.delete('/users',async(req,res)=>{
+    app.delete('/users/:id',async(req,res)=>{
        const id=req.params.id;
        const query={_id : new ObjectId(id)}
        const result = await userCollection.deleteOne(query)
@@ -121,6 +145,13 @@ async function run() {
     //survey related api
     app.get('/surveys',async(req,res)=>{
        const result=await surveyCollection.find().toArray()
+       res.send(result)
+    })
+
+    app.get('/surveys/:id',async(req,res)=>{
+       const id=req.params.id;
+       const query={_id : new ObjectId(id)}
+       const result = await surveyCollection.findOne(query)
        res.send(result)
     })
 
