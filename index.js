@@ -30,6 +30,8 @@ async function run() {
     const userCollection = client.db("opiniunDB").collection("users");
     const surveyCollection = client.db("opiniunDB").collection("surveys");
     const paymentCollection = client.db("opiniunDB").collection("payments");
+    const voterCollection = client.db("opiniunDB").collection("voters");
+    const reactCollection = client.db("opiniunDB").collection("reacts");
 
     //jwt related api
     app.post("/jwt", async (req, res) => {
@@ -127,12 +129,12 @@ async function run() {
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-      const updatedDoc = {
+      const updateDoc = {
         $set: {
           role: "admin",
         },
       };
-      const result = await userCollection.updateOne(filter, updatedDoc);
+      const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
@@ -179,6 +181,81 @@ async function run() {
       const result = await surveyCollection.findOne(query);
       res.send(result);
     });
+
+    // vote related api
+   app.get('/voters',async(req,res)=>{
+       const result=await voterCollection.find().toArray();
+       res.send(result)
+   })
+
+    app.post('/voters',async(req,res)=>{
+         const voterInfo=req.body
+         const result =await voterCollection.insertOne(voterInfo)
+         res.send(result)
+    })
+
+    app.patch('/surveys/yesVote/:id',async(req,res)=>{
+        const id=req.params.id;
+        const filter={_id : new ObjectId(id)}
+        const updateDoc={
+           $inc:{
+             "options.yes":1,
+             "options.total":1
+           }
+        }
+       const result=await surveyCollection.updateOne(filter,updateDoc)
+       res.send(result)
+    })
+
+    app.patch('/surveys/noVote/:id',async(req,res)=>{
+         const id=req.params.id;
+         const filter={_id:new ObjectId(id)}
+         const updateDoc={
+             $inc:{
+              "options.no":1,
+              "options.total":1
+             }
+         }
+         const result=await surveyCollection.updateOne(filter,updateDoc)
+        res.send(result)
+    })
+    
+    // like and dislike related api
+    app.get('/reactioner',async(req,res)=>{
+       const result = await reactCollection.find().toArray()
+       res.send(result)
+    })
+
+    app.post('/reactioner',async(req,res)=>{
+       const reactioner=req.body;
+       const result=await reactCollection.insertOne(reactioner)
+       res.send(result)
+    })
+
+    app.patch('/surveys/like/:id',async(req,res)=>{
+       const id=req.params.id;
+       const filter={_id:new ObjectId(id)}
+       const updateDoc={
+          $inc:{
+            "likeCount":1
+          }
+       }
+       const result=await surveyCollection.updateOne(filter,updateDoc)
+       res.send(result)
+    })
+
+    app.patch('/surveys/dislike/:id',async(req,res)=>{
+        const id=req.params.id;
+        const filter={_id:new ObjectId(id)}
+        const updateDoc={
+          $inc:{
+            "dislikeCount":1
+          }
+        }
+        const result=await surveyCollection.updateOne(filter,updateDoc)
+        res.send(result)
+    })
+
 
     //create payment intent
     app.post("/create-payment-intent", async (req, res) => {
