@@ -169,10 +169,29 @@ async function run() {
       const result = await userCollection.deleteOne(query);
       res.send(result);
     });
+   //prouser related api
+   app.get('/payments/proUsers',async(req,res)=>{
+      const result=await paymentCollection.find().toArray()
+      res.send(result)
+   })
+
 
     //survey related api
     app.get("/surveys", async (req, res) => {
-      const result = await surveyCollection.find().toArray();
+      const filter=req.query;
+      let query={}
+      if(filter.search){
+         query={
+          $or:[
+            { title:{$regex: filter.search, $options:'i'} },
+            { category:{$regex: filter.search, $options:'i'} },
+            {'options.total':{$eq : parseInt(filter.search)}}
+          ]
+          
+        }
+      }
+      
+      const result = await surveyCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -186,6 +205,29 @@ async function run() {
     app.post('/surveys',async(req,res)=>{
        const newSurvey=req.body;
        const result=await surveyCollection.insertOne(newSurvey)
+       res.send(result)
+    })
+
+    app.patch('/surveys/update/:id',async(req,res)=>{
+       const id=req.params.id;
+       const updateSurvey=req.body;
+       const filter={_id:new ObjectId(id)}
+       const updateDoc={
+          $set:{
+            title:updateSurvey.title,
+            description:updateSurvey.description,
+            question:updateSurvey.question,
+            "options.yes":updateSurvey.options.yes,
+            "options.no":updateSurvey.options.no,
+            "options.total":updateSurvey.options.total,
+            likeCount:updateSurvey.likeCount,
+            dislikeCount:updateSurvey.dislikeCount,
+            category:updateSurvey.category,
+            timestamp:updateSurvey.timestamp,
+            image:updateSurvey.image,
+          }
+       }
+       const result=await surveyCollection.updateOne(filter,updateDoc)
        res.send(result)
     })
 
@@ -225,6 +267,17 @@ async function run() {
          }
          const result=await surveyCollection.updateOne(filter,updateDoc)
         res.send(result)
+    })
+
+    app.patch('/surveys/update/:id',async(req,res)=>{
+       const id=req.params.id;
+       const survey=req.body;
+       const filter={_id: new ObjectId(id)}
+       const updateDoc={
+         $set:{
+             
+         }
+       }
     })
     
     // like and dislike related api
