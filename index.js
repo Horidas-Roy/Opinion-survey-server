@@ -77,12 +77,12 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/users/admin/:email",verifyToken, async (req, res) => {
+    app.get("/users/admin/:email", async (req, res) => {
       const email = req.params.email;
       //verify user by using token
-       if(email !== req.decoded.email){
-         return res.status(403).send({message:'forbiden access'})
-       }
+      //  if(email !== req.decoded.email){
+      //    return res.status(403).send({message:'forbiden access'})
+      //  }
       const query = { email: email };
       const user = await userCollection.findOne(query);
       let admin = false;
