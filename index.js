@@ -77,9 +77,12 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/users/admin/:email", async (req, res) => {
+    app.get("/users/admin/:email",verifyToken, async (req, res) => {
       const email = req.params.email;
-      //todo:verify user by using token
+      //verify user by using token
+       if(email !== req.decoded.email){
+         return res.status(403).send({message:'forbiden access'})
+       }
       const query = { email: email };
       const user = await userCollection.findOne(query);
       let admin = false;
@@ -127,7 +130,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/users/admin/:id", async (req, res) => {
+    app.patch("/users/admin/:id",verifyToken,verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -170,7 +173,7 @@ async function run() {
       res.send(result);
     });
    //prouser related api
-   app.get('/payments/proUsers',async(req,res)=>{
+   app.get('/payments/proUsers',verifyToken,async(req,res)=>{
       const result=await paymentCollection.find().toArray()
       res.send(result)
    })
